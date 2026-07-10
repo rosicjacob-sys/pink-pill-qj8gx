@@ -1,0 +1,28 @@
+plugins = []
+headers = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "/Users/andreidutescu/*B claude1 copy 2/pink-pill/dist"
+publishOrigin = "ui"
+commandOrigin = "ui"
+base = "/Users/andreidutescu/*B claude1 copy 2/pink-pill"
+command = "npm run build"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
