@@ -1,28 +1,20 @@
 export const tokens = {
   color: {
-    porcelain: '#FDF6FA',
+    sapphire: '#0A1F44',
+    cobalt: '#1E5BFA',
+    copper: '#C8783E',
+    azure: '#3B82F6',
+    porcelain: '#F0F4F8',
     pureWhite: '#FFFFFF',
-    royalPink: '#FF2E88',
-    deepPink: '#C4126B',
-    plum: '#1A0A14',
-    warmBlack: '#1C0D16',
-    muted: '#8A7E84',
+    night: '#060D1A',
+    muted: '#7B8CA3',
+    copperLight: '#E8A970',
+    copperDark: '#8B4513',
+    azureGlow: '#60A5FA',
   },
   font: {
     display: "'Playfair Display', serif",
     body: "'Inter', sans-serif",
     mono: "'JetBrains Mono', monospace",
-  },
-  spacing: {
-    section: 'min-h-screen',
-    content: 'max-w-7xl mx-auto px-6 lg:px-12',
-  },
-  motion: {
-    revealDuration: 0.9,
-    revealStagger: 0.032,
-    hoverSnap: 0.15,
-    scrubDamping: 0.6,
-    magneticStrength: 0.3,
-    magneticRadius: 100,
   },
 } as const;

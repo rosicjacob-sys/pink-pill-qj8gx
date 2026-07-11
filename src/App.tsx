@@ -18,49 +18,42 @@ import BuyBlock from './components/sections/BuyBlock';
 import FAQSection from './components/sections/FAQSection';
 import FooterSection from './components/sections/FooterSection';
 
-const CapsuleScene = lazy(() => import('./components/three/CapsuleScene'));
+const HelixScene = lazy(() => import('./components/three/HelixScene'));
 
 gsap.registerPlugin(ScrollTrigger);
 
 function App() {
-  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!loading) {
+    if (ready) {
       initScroll();
       window.scrollTo(0, 0);
-      if (mainRef.current) gsap.fromTo(mainRef.current, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' });
+      if (mainRef.current) gsap.fromTo(mainRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out' });
       return () => destroyScroll();
     }
-  }, [loading]);
+  }, [ready]);
 
   useEffect(() => {
     (window as any).dataLayer = (window as any).dataLayer || [];
-    const h = () => ScrollTrigger.refresh();
-    window.addEventListener('resize', h);
-    return () => window.removeEventListener('resize', h);
+    window.addEventListener('resize', () => ScrollTrigger.refresh());
+    return () => window.removeEventListener('resize', () => ScrollTrigger.refresh());
   }, []);
 
   return (
     <>
-      {loading && <Preloader onComplete={() => setLoading(false)} />}
-
-      {!loading && (
+      {!ready && <Preloader onComplete={() => setReady(true)} />}
+      {ready && (
         <>
           <ParticleBackground />
           <CustomCursor />
           <CartDrawer />
           <StickyBuyBar />
-
           <div ref={mainRef}>
-            {/* 3D Scene rendered behind hero */}
             <WebGLErrorBoundary>
-              <Suspense fallback={null}>
-                <CapsuleScene />
-              </Suspense>
+              <Suspense fallback={null}><HelixScene /></Suspense>
             </WebGLErrorBoundary>
-
             <HeroSection />
             <TrustStrip />
             <FlipbookSection />

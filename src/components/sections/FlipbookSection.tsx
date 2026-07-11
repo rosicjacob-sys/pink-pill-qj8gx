@@ -8,27 +8,20 @@ gsap.registerPlugin(ScrollTrigger);
 export default function FlipbookSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameCount = 60;
+  const frameCount = 80;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !sectionRef.current) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
-      drawFrame(canvas, ctx, 0);
-      return;
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { drawFrame(canvas, ctx, 1); return; }
 
     const resize = () => {
-      const rect = canvas.parentElement!.getBoundingClientRect();
-      canvas.width = rect.width * 2;
-      canvas.height = rect.height * 2;
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
+      const r = canvas.parentElement!.getBoundingClientRect();
+      canvas.width = r.width * 2; canvas.height = r.height * 2;
+      canvas.style.width = `${r.width}px`; canvas.style.height = `${r.height}px`;
       ctx.scale(2, 2);
     };
     resize();
@@ -39,180 +32,142 @@ export default function FlipbookSection() {
         trigger: sectionRef.current!,
         start: 'top top',
         end: '+=200%',
-        pin: true,
-        anticipatePin: 1,
-        scrub: 1,
+        pin: true, anticipatePin: 1, scrub: 0.8,
         onUpdate: (self) => {
-          const frameIndex = Math.min(Math.floor(self.progress * frameCount), frameCount - 1);
-          drawFrame(canvas, ctx, frameIndex / (frameCount - 1));
+          const fi = Math.min(Math.floor(self.progress * frameCount), frameCount - 1);
+          drawFrame(canvas, ctx, fi / (frameCount - 1));
         },
       });
     }, sectionRef);
 
-    return () => {
-      ctx2.revert();
-      window.removeEventListener('resize', resize);
-    };
+    return () => { ctx2.revert(); window.removeEventListener('resize', resize); };
   }, []);
 
   return (
     <section ref={sectionRef} className="relative overflow-hidden bg-porcelain">
       <div className="sticky top-0 h-screen flex flex-col lg:flex-row items-center gap-8 lg:gap-16 px-6 lg:px-12 py-16">
-        {/* Left: Label */}
-        <div className="lg:w-[40%] shrink-0">
-          <MaskedReveal as="p" className="text-xs tracking-[0.3em] uppercase text-muted font-mono mb-4">
-            Inside the capsule
+        <div className="lg:w-[38%] shrink-0">
+          <MaskedReveal className="text-xs tracking-[0.3em] uppercase text-muted font-mono mb-4">Mechanism</MaskedReveal>
+          <MaskedReveal className="text-3xl md:text-4xl lg:text-5xl font-display font-black leading-none text-sapphire mb-4">
+            From powder
+            <br /><span className="text-cobalt">to repair signal.</span>
           </MaskedReveal>
-          <MaskedReveal as="h2" className="text-3xl md:text-4xl lg:text-5xl font-display font-black leading-none text-warm-black mb-4">
-            Five compounds.
-            <br />
-            <span className="text-royal-pink">One perfect dose.</span>
-          </MaskedReveal>
-          <MaskedReveal className="text-muted/70 leading-relaxed max-w-sm">
-            Scroll to watch the ingredients release. Each frame reveals another layer of what's inside.
+          <MaskedReveal className="text-muted/60 leading-relaxed max-w-sm">
+            Scroll to watch GHK-Cu dissolve into the bloodstream, bind to copper transport proteins, and initiate DNA repair at the cellular level.
           </MaskedReveal>
         </div>
 
-        {/* Right: Canvas */}
-        <div className="flex-1 w-full h-[60vh] lg:h-full relative rounded-3xl overflow-hidden border border-warm-black/5 bg-pure-white">
+        <div className="flex-1 w-full h-[55vh] lg:h-full relative rounded-3xl overflow-hidden border border-sapphire/5 bg-pure-white">
           <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
-          {/* Scroll progress bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-warm-black/5">
-            <div className="flipbook-progress h-full bg-royal-pink origin-left" style={{ width: '0%' }} />
-          </div>
         </div>
       </div>
-
-      {/* Progress line */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-32 bg-royal-pink/20 hidden lg:block" />
     </section>
   );
 }
 
-function drawFrame(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, progress: number) {
-  const w = canvas.width / 2;
-  const h = canvas.height / 2;
-  const cx = w / 2;
-  const cy = h / 2;
-
+function drawFrame(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, p: number) {
+  const w = canvas.width / 2, h = canvas.height / 2;
+  const cx = w / 2, cy = h * 0.45;
   ctx.clearRect(0, 0, w, h);
 
-  // Subtle radial gradient background
-  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.8);
-  bgGrad.addColorStop(0, '#FDF6FA');
-  bgGrad.addColorStop(1, '#FFFFFF');
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, w, h);
+  // Background
+  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.7);
+  bg.addColorStop(0, '#F0F4F8'); bg.addColorStop(1, '#FFFFFF');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
 
-  // Pill dimensions
-  const pillW = 80;
-  const pillH = 200;
-  const r = pillW / 2;
+  // Powder pile → dissolver into bloodstream
+  const dissolve = Math.min(p * 1.4, 1);
+  const powderRemaining = 1 - dissolve;
 
-  // Rotation based on progress
-  const rotation = progress * Math.PI * 3;
-  const scale = 1 + Math.sin(progress * Math.PI) * 0.15;
+  if (powderRemaining > 0) {
+    // Powder pile
+    const pileY = cy + 30;
+    const pileR = 50 * powderRemaining;
 
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(scale, scale);
-  ctx.rotate(rotation);
-
-  // Shadow
-  ctx.shadowColor = 'rgba(26, 10, 20, 0.15)';
-  ctx.shadowBlur = 40;
-  ctx.shadowOffsetY = 15;
-
-  // Pill gradient
-  const pillGrad = ctx.createLinearGradient(-pillW, -pillH, pillW, pillH);
-  pillGrad.addColorStop(0, '#FF2E88');
-  pillGrad.addColorStop(0.4, '#FF5AA0');
-  pillGrad.addColorStop(0.7, '#C4126B');
-  pillGrad.addColorStop(1, '#8A0040');
-
-  ctx.fillStyle = pillGrad;
-  ctx.beginPath();
-  // Top rounded end
-  ctx.arc(0, -pillH / 2 + r, r, Math.PI, 0, false);
-  // Right side
-  ctx.lineTo(r, pillH / 2 - r);
-  // Bottom rounded end
-  ctx.arc(0, pillH / 2 - r, r, 0, Math.PI, false);
-  // Left side
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.shadowColor = 'transparent';
-
-  // Gloss highlight
-  const glossGrad = ctx.createLinearGradient(-r * 0.6, -pillH / 2, r * 0.8, pillH / 2);
-  glossGrad.addColorStop(0, 'rgba(255,255,255,0.5)');
-  glossGrad.addColorStop(0.3, 'rgba(255,255,255,0.15)');
-  glossGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
-  glossGrad.addColorStop(1, 'rgba(255,255,255,0)');
-
-  ctx.fillStyle = glossGrad;
-  ctx.beginPath();
-  ctx.arc(-r * 0.1, -pillH / 2 + r * 1.2, r * 0.55, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Specular dot
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.beginPath();
-  ctx.arc(-r * 0.15, -pillH / 2 + r * 1.5, 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-
-  // Ingredient particles that emerge as progress increases
-  if (progress > 0.15) {
-    const particleCount = Math.floor((progress - 0.15) * 80);
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (i / particleCount) * Math.PI * 2 + progress * 4;
-      const radius = 40 + progress * 140 + Math.sin(i * 7 + progress * 10) * 30;
-      const px = cx + Math.cos(angle) * radius;
-      const py = cy + Math.sin(angle) * radius;
-      const size = 2 + (1 - (progress - 0.15)) * 8;
-
-      ctx.beginPath();
-      ctx.arc(px, py, size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 46, 136, ${0.3 + progress * 0.4})`;
+    for (let i = 0; i < 40 * powderRemaining; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.random() * pileR;
+      const x = cx + Math.cos(angle) * r * (0.5 + Math.random() * 0.5);
+      const y = pileY - Math.random() * 20 * powderRemaining + Math.sin(angle * 3) * 5;
+      const size = 1.5 + Math.random() * 3 * powderRemaining;
+      ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fillStyle = powderRemaining > 0.3
+        ? `rgba(59, 130, 246, ${0.6 + Math.random() * 0.3})`
+        : `rgba(30, 91, 250, ${0.3 + Math.random() * 0.4})`;
       ctx.fill();
+    }
 
-      // Connecting line back to pill for some particles
-      if (i % 5 === 0) {
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        const lineAngle = angle + Math.sin(progress * 8) * 0.3;
-        ctx.lineTo(cx + Math.cos(lineAngle) * 40, cy + Math.sin(lineAngle) * 40);
-        ctx.strokeStyle = `rgba(255, 46, 136, ${0.08})`;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
+    // Label
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.fillStyle = `rgba(10, 31, 68, ${0.4 + powderRemaining * 0.5})`;
+    ctx.textAlign = 'center';
+    ctx.fillText('GHK-Cu Lyophilized', cx, pileY + 40 * powderRemaining + 18);
+  }
+
+  // Dissolving particles flowing down
+  if (p > 0.1) {
+    const flowCount = Math.floor((p - 0.1) * 100);
+    for (let i = 0; i < flowCount; i++) {
+      const t = (i / flowCount);
+      const streamX = cx + Math.sin(t * 8 + p * 6) * 40;
+      const streamY = cy + 50 + t * (h * 0.5);
+      const s = 2 + (1 - t) * 4;
+      ctx.beginPath(); ctx.arc(streamX, streamY, s, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(59, 130, 246, ${0.15 + (1 - Math.abs(t - 0.5) * 2) * 0.4})`;
+      ctx.fill();
     }
   }
 
-  // Ingredient labels that appear
-  if (progress > 0.3) {
-    const labels = ['L-Theanine', 'Magnesium', 'Ashwagandha', 'Vitamin B6', 'Zinc'];
-    const labelIndex = Math.min(Math.floor((progress - 0.3) / 0.14), labels.length - 1);
+  // DNA strand forming at the bottom
+  if (p > 0.35) {
+    const dnaP = Math.min((p - 0.35) / 0.5, 1);
+    const baseY = cy + h * 0.38;
+    const strandW = 90;
+    const turns = 2.5;
+    const visibleLen = dnaP * (h * 0.42);
 
-    for (let j = 0; j <= labelIndex; j++) {
-      const angle = (j / labels.length) * Math.PI * 2 - Math.PI / 2 + progress * 2;
-      const dist = 170 + j * 20;
-      const lx = cx + Math.cos(angle) * dist;
-      const ly = cy + Math.sin(angle) * dist;
+    for (let y = 0; y < visibleLen; y += 1.5) {
+      const t = y / (h * 0.42);
+      if (t > dnaP) break;
+      const angle = t * turns * Math.PI * 2;
 
-      ctx.font = '400 12px Inter, sans-serif';
-      ctx.fillStyle = `rgba(26, 10, 20, ${0.3 + (progress - 0.3 - j * 0.14) * 5})`;
+      // Strand 1
+      const x1 = cx + Math.cos(angle) * strandW * 0.3;
+      const x2 = cx + Math.cos(angle + Math.PI) * strandW * 0.3;
+
+      const nY = baseY - y * 0.5;
+
+      ctx.beginPath(); ctx.arc(x1, nY, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(30, 91, 250, ${0.5 + t * 0.3})`; ctx.fill();
+
+      ctx.beginPath(); ctx.arc(x2, nY, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 120, 62, ${0.4 + t * 0.3})`; ctx.fill();
+
+      // Rung
+      if (y % 8 === 0) {
+        ctx.beginPath(); ctx.moveTo(x1, nY); ctx.lineTo(x2, nY);
+        ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 + t * 0.15})`;
+        ctx.lineWidth = 0.6; ctx.stroke();
+      }
+    }
+
+    // Labels
+    if (dnaP > 0.5) {
+      ctx.font = '500 10px Inter, sans-serif';
+      ctx.fillStyle = `rgba(10, 31, 68, ${(dnaP - 0.5) * 1.5})`;
       ctx.textAlign = 'center';
-      ctx.fillText(labels[j], lx, ly);
+      ctx.fillText('Copper Transport Protein (CTR1)', cx, baseY - visibleLen * 0.5 - 8);
+      ctx.fillText('DNA Repair Cascade', cx, baseY + 20);
+    }
+  }
 
-      // Dot next to label
-      ctx.beginPath();
-      ctx.arc(lx, ly - 16, 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#FF2E88';
-      ctx.fill();
+  // Copper dots around
+  if (p > 0.15) {
+    for (let i = 0; i < 15; i++) {
+      const cuX = cx + Math.cos(p * 3 + i * 1.5) * (70 + Math.sin(p * 5 + i) * 30);
+      const cuY = cy - 10 + Math.sin(p * 4 + i) * 60 + p * 60;
+      ctx.beginPath(); ctx.arc(cuX, cuY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(232, 169, 112, ${0.5 + Math.sin(p * 4 + i) * 0.3})`; ctx.fill();
     }
   }
 }
